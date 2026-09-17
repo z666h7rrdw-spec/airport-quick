@@ -1,0 +1,41 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><title>Airport Quick</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f7fa;color:#07152f;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:#0c3c69;color:white;text-align:center;padding:calc(12px + env(safe-area-inset-top)) 12px 13px;font-size:26px;font-weight:800}
+main{max-width:560px;margin:auto;padding:16px}input{width:100%;font-size:20px;padding:15px 17px;border-radius:16px;border:1px solid #d9e1ea;outline:none}
+.card{background:white;margin-top:15px;padding:21px;border:1px solid #dce4ec;border-radius:21px;box-shadow:0 5px 20px #1232}
+.id{font-size:40px;font-weight:850}.name{font-size:21px;font-weight:750}.muted{color:#617087}.call{margin-top:7px}
+hr{border:0;border-top:1px solid #e3e9ef;margin:17px 0}.row{display:flex;justify-content:space-between;gap:12px;padding:7px 0}.v{font-weight:800;text-align:right}
+.sec{font-size:12px;font-weight:800;letter-spacing:.8px;color:#617087;margin-bottom:5px}
+button{width:100%;border:0;border-radius:14px;padding:14px;font-size:18px;font-weight:750;background:#e7f1ff;color:#075dcc;margin-top:15px}
+.sheet{display:none;margin-top:12px;padding:16px;border-radius:17px;background:#f0f5fa}.inputs{display:flex;gap:10px}.inputs input{font-size:18px;padding:11px}
+.result{font-size:17px;font-weight:750;line-height:1.55;margin-top:12px}.empty{text-align:center;color:#617087;padding:35px 5px}
+</style></head><body><header>Airport Quick</header><main>
+<input id="search" placeholder="Airport name or identifier" autocomplete="off" autocapitalize="characters">
+<div id="out"><div class="empty">Search an airport to begin.</div></div>
+<script>
+const A=[{"id": "KFCI", "name": "Richmond Executive-Chesterfield County", "city": "Chesterfield, VA", "call": "Chesterfield / Richmond Executive", "elev": "236 ft MSL", "runways": [["15 / 33", "5,500 ft"]], "freqs": [["AWOS", "120.625"], ["CTAF / UNICOM", "123.050"]]}, {"id": "KCHO", "name": "Charlottesville-Albemarle", "city": "Charlottesville, VA", "call": "Charlottesville", "elev": "639 ft MSL", "runways": [["03 / 21", "6,801 ft"]], "freqs": [["ATIS", "118.425"], ["Approach", "126.550"], ["Tower", "124.500"], ["Ground", "121.900"], ["Departure", "126.550"]]}]; let current=null;
+function calc(){
+ let d=+document.getElementById('wd').value, s=+document.getElementById('ws').value, el=document.getElementById('xr');
+ if(!Number.isFinite(d)||!Number.isFinite(s)){el.innerHTML='';return}
+ let rows=current.runways.flatMap(r=>r[0].split('/').map(x=>x.trim())).map(r=>{
+  let h=(+r)*10; if(h===360)h=0; let a=(d-h)*Math.PI/180;
+  let head=s*Math.cos(a), cross=s*Math.sin(a);
+  return `<div>RWY ${r}: ${Math.abs(cross).toFixed(1)} kt crosswind (${cross>0?'from left':'from right'}), ${Math.abs(head).toFixed(1)} kt ${head>=0?'headwind':'tailwind'}</div>`;
+ }); el.innerHTML=rows.join('');
+}
+function show(a){
+ current=a; let rw=a.runways.map(x=>`<div class=row><span>${x[0]}</span><span class=v>${x[1]}</span></div>`).join('');
+ let fq=a.freqs.map(x=>`<div class=row><span class=muted>${x[0]}</span><span class=v>${x[1]}</span></div>`).join('');
+ document.getElementById('out').innerHTML=`<div class=card><div class=id>${a.id}</div><div class=name>${a.name}</div><div class=muted>${a.city}</div><div class=call>Radio Call: <b>${a.call}</b></div><hr>
+ <div class=row><span class=muted>Elevation</span><span class=v>${a.elev}</span></div><hr><div class=sec>RUNWAYS</div>${rw}<hr><div class=sec>FREQUENCIES</div>${fq}
+ <button onclick="document.getElementById('xw').style.display='block'">Crosswind</button>
+ <div id=xw class=sheet><div class=sec>CROSSWIND CALCULATOR — MANUAL / OFFLINE</div><div class=inputs><input id=wd type=number placeholder="Wind °" oninput=calc()><input id=ws type=number placeholder="Speed kt" oninput=calc()></div><div id=xr class=result></div></div></div>`;
+}
+document.getElementById('search').addEventListener('input',e=>{
+ let s=e.target.value.trim().toLowerCase(); if(!s){document.getElementById('out').innerHTML='<div class=empty>Search an airport to begin.</div>';return}
+ let a=A.find(x=>[x.id,x.id.slice(1),x.name,x.city,x.call].join(' ').toLowerCase().includes(s));
+ if(a)show(a); else document.getElementById('out').innerHTML='<div class=empty>No airport found in current build.</div>';
+});
+</script></main></body></html>
